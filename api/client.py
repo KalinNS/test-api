@@ -32,3 +32,6 @@ class BearClient:
 
     def wrong_ap(self):
         return self._s.get(self.host + "/bears/" )
+
+    def get_wrong_command(self, command):
+        return self._s.get(self.host + "/bears/" + str(command))

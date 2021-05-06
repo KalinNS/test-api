@@ -63,6 +63,16 @@ class TestSmoke:
         #04: validate data for a new bear
         match_results(reference_data, result_data) 
 
+    def test_update_bear_data_incorrect_id(self, client, make_bear_record):
+        id = 999
+        
+        #01: update data for bear
+        reference_data = dict(make_bear_record)
+        resp = client.update_bear_id(id, reference_data)
+        assert resp.status_code == 500
+
+
+
     def test_delete_bear(self, client):
         #01: get one of the entries for any bear
         resp = client.read_all()
@@ -85,6 +95,32 @@ class TestSmoke:
         assert resp.status_code == 200
         assert resp.text == 'EMPTY'  
 
+    def test_double_delete_bear(self, client):
+        #01: get one of the entries for any bear
+        resp = client.read_all()
+
+        assert resp.status_code == 200
+
+        result_data = json.loads(resp.text)
+        data = dict(result_data[-1])
+
+        id = data['bear_id']
+
+        #02: delete by id
+        resp = client.delete_id(id)   
+        assert resp.status_code == 200
+        assert resp.text == 'OK'  
+
+        #03: try to get data
+        resp = client.read_id(id)
+
+        assert resp.status_code == 200
+        assert resp.text == 'EMPTY'  
+
+        #04: delete by id again
+        resp = client.delete_id(id)   
+        assert resp.status_code == 200
+        assert resp.text == 'OK'  
 
 #test cases for different
 #"POLAR", "BROWN", "BLACK", "GUMMY"
@@ -97,6 +133,7 @@ class TestSmoke:
         ("BROWN","","10.0",200),
         ("","NAME","10.0",500),
         ("BROWN","NAME","",500),
+        ("","","",500),
         ("BROWN","NAME","-10.0",200),
         ("BROWN","NAME","0.0",200),
         ("BROWN","NAME","999",200),
@@ -133,6 +170,35 @@ class TestSmoke:
         assert resp.status_code == 404
 
 
+    def post_incomplete_body_no_bear_type(self, client):
+        data = {"bear_name": "TEST_NAME","bear_age": 1.1}  
+        resp = client.create_bear(data)
+
+        assert resp.status_code == 500
+
+    def post_incomplete_body_no_bear_name(self, client):
+        data = {"bear_type": "POLAR","bear_age": 1.1}  
+        resp = client.create_bear(data)
+
+        assert resp.status_code == 500
+
+    def post_incomplete_body_no_bear_age(self, client):
+        data = {"bear_type": "POLAR","bear_name": "TEST_NAME"}  
+        resp = client.create_bear(data)
+
+        assert resp.status_code == 500
+
+    def post_incomplete_body_no_body(self, client):
+        data = {}  
+        resp = client.create_bear(data)
+
+        assert resp.status_code == 500
+    
+    def get_wrong_command(self, client):
+        resp = client.get_wrong_command('test')
+
+        assert resp.status_code == 404
+
     def _test_delete_all(self, client):
         #01: get one of the entries for any bear
         resp = client.read_all()
@@ -155,4 +221,5 @@ class TestSmoke:
         result_data = json.loads(resp.text)
         assert len(result_data) == 0
          
+    
   
